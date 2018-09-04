@@ -5,16 +5,19 @@
 
 #define LCD_ADRS 0x3E
 #define ONE_WIRE_BUS 2
+#define POWER_SWITCH 34
+#define DELAY_TIME 2000
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 BluetoothSerial SerialBT;
 
 static int mode = 1;
 static int terminal_mode = 0;
-static int debug = 0;
+static int debug = 1;
 static float group1_average = 0.0;
 static float group2_average = 0.0;
 static float air_temp = 0.0;
+static float target_temp = 70.0;
 
 char state_name_1[]="Monitoring      ";
 char state_name_2[]="Set Target Temp ";
@@ -133,10 +136,12 @@ void setup(void) {
   myPrintln(" Low Temperature init...");
 
   sensors.begin();
-  myPrintln("init_LCD start");
   Wire.begin();
+  myPrintln("init_LCD start");
   init_LCD();    
   myPrintln("init_LCD end");
+
+  pinMode(POWER_SWITCH, OUTPUT);
 }
 
 void printTemplature() {
@@ -178,7 +183,14 @@ void printTemplature() {
 void loop() {
   exec_mode_1();
   printTemplature();
-  delay(1000);
+  if (target_temp < air_temp) {
+    debugPrintln("POWER_SWITCH:LOW");
+    digitalWrite(POWER_SWITCH, LOW);
+  } else {
+    debugPrintln("POWER_SWITCH:HIGH");
+    digitalWrite(POWER_SWITCH, HIGH);
+  }
+  delay(DELAY_TIME);
 }
 
 
